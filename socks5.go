@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	// log "github.com/sirupsen/logrus"
+	"log"
+
 	"golang.org/x/net/context"
 )
 
@@ -83,7 +86,9 @@ func New(conf *Config) (*Server, error) {
 	}
 
 	// Ensure we have a log target
-	conf.Logger = log.New()
+	if conf.Logger == nil {
+		conf.Logger = log.New(os.Stdout, "", log.LstdFlags)
+	}
 
 	server := &Server{
 		config: conf,
@@ -116,7 +121,6 @@ func (s *Server) Serve(l net.Listener) error {
 		if err != nil {
 			select {
 			case <-s.close:
-				log.Info("closing server")
 				return nil
 			default:
 				return err
@@ -131,7 +135,6 @@ func (s *Server) Serve(l net.Listener) error {
 }
 
 func (s *Server) Close() {
-	log.Info("server was asked to close")
 	close(s.close)
 	s.listener.Close()
 	s.wg.Wait()
